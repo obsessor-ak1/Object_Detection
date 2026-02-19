@@ -1,0 +1,11 @@
+# Ignoring builds and caches
+__pycache__/
+*.egg-info/
+# Ignoring model checkpoints and logs
+checkpoints/
+wandb/
+# Ignoring data files
+data/
+# Ignoring Jupyter Notebook checkpoints and VSCode workspace settings
+.ipynb_checkpoints/
+.vscode/

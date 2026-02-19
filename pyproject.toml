@@ -1,0 +1,16 @@
+[project]
+name = "object_detection"
+version = "0.0.1"
+description = "A project implementing object detection pipelines from scratch"
+authors = [
+    { name="Aayush Kumar", email="aayushkumarfirst@gmail.com" }
+]
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["detection_tools"]
