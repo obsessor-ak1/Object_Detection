@@ -13,4 +13,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["detection_tools"]
+include = ["detection_tools*"]
