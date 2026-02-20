@@ -208,7 +208,7 @@ class SSDLoss(nn.Module):
         final_reg_loss = reg_loss / num_pos_total
         if raw:
             return {"reg_loss": final_reg_loss, "cls_loss": final_cls_loss}
-        return self.alpha * reg_loss + final_cls_loss
+        return self.alpha * final_reg_loss + final_cls_loss
 
 
 class SSDScoreHead(nn.Module):
