@@ -63,34 +63,42 @@ def tensorize_target(target):
     }
 
 
-def get_degenerate_boxes_idx(boxes: tv_tensors.BoundingBoxes) -> torch.Tensor:
-    """Returns the indices of degenerate boxes (boxes with zero or negative area)."""
-    mask = boxes[:, 2:] <= boxes[:, :2]
-    degenerate_idxs = torch.where(mask.any(dim=1))[0]
-    return degenerate_idxs
+def remove_degenerate_boxes(target):
+    """
+    Removes boxes where:
+        x_max <= x_min OR y_max <= y_min
+    """
+    boxes = target["bbox"]
+
+    valid_mask = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
+
+    target["bbox"] = tv_tensors.BoundingBoxes(
+        boxes[valid_mask],
+        format=boxes.format,
+        canvas_size=boxes.canvas_size
+    )
+
+    target["labels"] = target["labels"][valid_mask]
+
+    return target
 
 
 class SSDVOCDataset(VOCDetection):
-    def __init__(self, background_present=True, **kwargs):
-        self.actual_transforms = kwargs.pop("transforms", None)
-        self.background_present = background_present
+    def __init__(self, background_present=True, transforms=None, **kwargs):
         super().__init__(transforms=None, **kwargs)
+        self.actual_transforms = transforms
+        self.background_present = background_present
 
     def __getitem__(self, index):
         img, target = super().__getitem__(index)
-        target = tensorize_target(target)   
-        # Apply transforms to (PIL Image, tv_tensors.BoundingBoxes)
+        # Convert annotation to tensor format
+        target = tensorize_target(target)
+        # Shift labels for background class
         if self.background_present:
-            target["labels"] = target["labels"] + 1  # Shift labels by 1 to account for background class
+            target["labels"] = target["labels"] + 1
+        # Apply transforms (image + boxes together)
         if self.actual_transforms:
             img, target = self.actual_transforms(img, target)
-        # Getting rid of degenerate boxes
-        degenerate_idxs = get_degenerate_boxes_idx(target["bbox"])
-        if len(degenerate_idxs) > 0:
-            target["bbox"] = tv_tensors.BoundingBoxes(
-                target["bbox"][degenerate_idxs],
-                format=target["bbox"].format,
-                canvas_size=target["bbox"].canvas_size
-            )
-            target["labels"] = target["labels"][degenerate_idxs]
+        # Remove invalid boxes AFTER transforms
+        target = remove_degenerate_boxes(target)
         return img, target
