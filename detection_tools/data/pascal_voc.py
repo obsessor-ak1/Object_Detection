@@ -31,17 +31,17 @@ def tensorize_target(target):
     """Tensorize the target variable in the VOC Detection dataset
     provided by torchvision.datasets.VOCDetection."""
     objects = target["annotation"]["object"]
-    height = float(target["annotation"]["size"]["height"])
-    width = float(target["annotation"]["size"]["width"])
+    height = int(target["annotation"]["size"]["height"])
+    width = int(target["annotation"]["size"]["width"])
 
     bboxes = []
     labels = []
     for obj in objects:
         bbox = obj["bndbox"]
-        xmin = float(bbox["xmin"])
-        xmax = float(bbox["xmax"])
-        ymin = float(bbox["ymin"])
-        ymax = float(bbox["ymax"])
+        xmin = float(bbox["xmin"]) - 1
+        xmax = float(bbox["xmax"]) - 1
+        ymin = float(bbox["ymin"]) - 1
+        ymax = float(bbox["ymax"]) - 1
         name = obj["name"]
         label = VOC_CLASS_TO_IDX[name]
         labels.append(label)
@@ -84,14 +84,15 @@ def remove_degenerate_boxes(target):
 
 
 class SSDVOCDataset(VOCDetection):
-    def __init__(self, background_present=True, transforms=None, **kwargs):
-        super().__init__(transforms=None, **kwargs)
-        self.actual_transforms = transforms
+    def __init__(self, background_present=True, transform=None, **kwargs):
+        super().__init__(transform=None, **kwargs)
+        self.actual_transforms = transform
         self.background_present = background_present
 
     def __getitem__(self, index):
         img, target = super().__getitem__(index)
         # Convert annotation to tensor format
+        img = tv_tensors.Image(img)
         target = tensorize_target(target)
         # Shift labels for background class
         if self.background_present:
